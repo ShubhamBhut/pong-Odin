@@ -32,14 +32,9 @@ main :: proc(){
 	rl.SetTargetFPS(60)
 	rl.SetWindowTitle("Pong")
 	is_running := true	
+	victory_points := 10
 
-	player1.p = math.float2{100.0, f32(window_dim.y/2)}
-	player2.p = math.float2{f32(window_dim.x - 100.0), f32(window_dim.y/2)}
-
-	player1.dim = math.int2{10, 80}
-	player2.dim = math.int2{10, 80}
-
-	ball.p = {f32(window_dim.x/2), f32(window_dim.y/2)}
+	round_reset(&ball, &player1, &player2, window_dim)
 
 	current_speed :f32 = 15.0
 	ball.velocity = math.float2{rand.float32_normal(0,1), rand.float32_normal(0,1)}
@@ -50,7 +45,7 @@ main :: proc(){
 
 		// ball position based on its velocity
 		ball.p += (ball.velocity * current_speed)
-		
+
 		//ball collision with wall
 		if ball.p.x < 0 {
 			ball.p.x = 0
@@ -98,15 +93,18 @@ main :: proc(){
 		//Draw paddle and ball
 		rl.DrawRectangle(i32(player1.p.x), i32(player1.p.y), player1.dim.x, player1.dim.y, rl.WHITE)
 		rl.DrawRectangle(i32(player2.p.x), i32(player2.p.y), player2.dim.x, player2.dim.y, rl.WHITE)
-		rl.DrawRectangle(i32(ball.p.x), i32(ball.p.y), 10, 10, rl.WHITE)
+		// rl.DrawRectangle(i32(ball.p.x), i32(ball.p.y), 10, 10, rl.WHITE)
+		rl.DrawCircle(i32(ball.p.x), i32(ball.p.y), 7, rl.WHITE)
 		rl.EndDrawing()
 
 
 		//scoring system
 		if ball.p.x <= 0{
 			player2.score += 1
+			round_reset(&ball, &player1, &player2, window_dim)
 		}else if ball.p.x >= f32(window_dim.x){
 			player1.score += 1
+			round_reset(&ball, &player1, &player2, window_dim)
 		}
 
 		player1_score := strings.clone_to_cstring(fmt.tprintf("P1  %v",player1.score),context.temp_allocator)
@@ -115,7 +113,53 @@ main :: proc(){
 		player2_score := strings.clone_to_cstring(fmt.tprintf("P2  %v",player2.score),context.temp_allocator)
 		rl.DrawText(player2_score, window_dim.x - 100, 100, 20, rl.DARKGRAY)
 
+		//victory condition
+		if player1.score == victory_points {
+			ball.velocity.x = 0
+			ball.velocity.y = 0
+			rl.DrawText("The winner is: Player1", 100, 100, 60, rl.WHITE )
+			rl.DrawText("Press r to play again", 100, 300, 30, rl.WHITE)
+			if rl.IsKeyDown(rl.KeyboardKey.R){
+				restart_game(&ball, &player1, &player2, window_dim)
+			}
+		} else if player2.score == victory_points {
+			ball.velocity.x = 0
+			ball.velocity.y = 0
+			rl.DrawText("The winner is: Player2", 100, 100, 60, rl.WHITE )
+			rl.DrawText("Press r to play again", 100, 300, 30, rl.WHITE)
+			if rl.IsKeyDown(rl.KeyboardKey.R){
+				restart_game(&ball, &player1, &player2, window_dim)
+			}
+		}
+
 	}
+}
+
+//victory
+// declare_victor :: proc(ball: ^Ball, winner : ^Paddle, loser : ^Paddle, window_dim: math.int2){
+// 	is_running := false
+// 	restart_game(ball, winner, loser, window_dim)
+// 	rl.DrawText("The winner is: %v", 100, 100, 100, rl.WHITE )
+// }
+
+//restart game
+restart_game :: proc(ball: ^Ball, player1 : ^Paddle, player2 : ^Paddle, window_dim: math.int2){
+	player1.score = 0
+	player2.score = 0
+	round_reset(ball, player1, player2, window_dim)
+}
+
+//ball location restart on point scoring
+round_reset :: proc(ball: ^Ball, player1 : ^Paddle, player2 : ^Paddle, window_dim : math.int2){
+	player1.p = math.float2{100.0, f32(window_dim.y/2)}
+	player2.p = math.float2{f32(window_dim.x - 100.0), f32(window_dim.y/2)}
+
+	player1.dim = math.int2{10, 80}
+	player2.dim = math.int2{10, 80}
+
+	ball.p = {f32(window_dim.x/2), f32(window_dim.y/2)}
+
+
 }
 
 paddle_ball_collision_detection :: proc(ball : ^Ball, paddle : Paddle){
