@@ -90,6 +90,7 @@ main :: proc(){
 		}
 
 
+		//I made the change
 		//Draw paddle and ball
 		rl.DrawRectangle(i32(player1.p.x), i32(player1.p.y), player1.dim.x, player1.dim.y, rl.WHITE)
 		rl.DrawRectangle(i32(player2.p.x), i32(player2.p.y), player2.dim.x, player2.dim.y, rl.WHITE)
